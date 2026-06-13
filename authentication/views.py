@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .serializers import LoginSerializer
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
 
 @api_view(['GET'])
 def hello(request):
@@ -34,9 +37,14 @@ def login(request):
         return Response({
         "message": "Invalid credentials!"
         }, status=401)
+    
+    refresh = RefreshToken.for_user(user)
+
     return Response({
         "success": True,
         "message": "Login successful",
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
         "user": {
             "id": user.id,
             "username": user.username,
@@ -44,4 +52,13 @@ def login(request):
             "first_name": user.first_name,
             "last_name": user.last_name
         }
+    })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def profile(request):
+    return Response({
+        "message": "Welcome!",
+        "user": request.user.username
     })
